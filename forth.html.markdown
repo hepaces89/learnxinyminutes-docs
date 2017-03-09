@@ -12,7 +12,7 @@ such as Open Firmware. It's also used by NASA.
 Note: This article focuses predominantly on the Gforth implementation of
 Forth, but most of what is written here should work elsewhere.
 
-```
+```forth
 \ This is a comment
 ( This is also a comment but it's only used when defining words )
 
@@ -54,7 +54,7 @@ Forth, but most of what is written here should work elsewhere.
 3 dup -          \ duplicate the top item (1st now equals 2nd): 3 - 3
 2 5 swap /       \ swap the top with the second element:        5 / 2
 6 4 5 rot .s     \ rotate the top 3 elements:                   4 5 6
-4 0 drop 2 /     \ remove the top item (dont print to screen):  4 / 2
+4 0 drop 2 /     \ remove the top item (don't print to screen):  4 / 2
 1 2 3 nip .s     \ remove the second item (similar to drop):    1 3
 
 \ ---------------------- More Advanced Stack Manipulation ----------------------
@@ -117,7 +117,7 @@ one-to-12                                 \ 0 1 2 3 4 5 6 7 8 9 10 11 12 ok
 : threes ( n n -- ) ?do i . 3 +loop ;    \ ok
 15 0 threes                             \ 0 3 6 9 12 ok
 
-\ Indefinite loops with `begin` <stuff to do> <flag> `unil`:
+\ Indefinite loops with `begin` <stuff to do> <flag> `until`:
 : death ( -- ) begin ." Are we there yet?" 0 until ;    \ ok
 
 \ ---------------------------- Variables and Memory ----------------------------
@@ -133,7 +133,7 @@ variable age    \ ok
 age @ .    \ 21 ok
 age ?      \ 21 ok
 
-\ Constants are quite simiar, except we don't bother with memory addresses:
+\ Constants are quite similar, except we don't bother with memory addresses:
 100 constant WATER-BOILING-POINT    \ ok
 WATER-BOILING-POINT .               \ 100 ok
 

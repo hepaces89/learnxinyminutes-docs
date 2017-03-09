@@ -1,14 +1,15 @@
 ---
 language: elisp
 contributors:
-    - ["Bastien Guerry", "http://bzg.fr"]
+    - ["Bastien Guerry", "https://bzg.fr"]
+    - ["Saurabh Sandav", "http://github.com/SaurabhSandav"]
 filename: learn-emacs-lisp.el
 ---
 
 ```scheme
 ;; This gives an introduction to Emacs Lisp in 15 minutes (v0.2d)
 ;;
-;; Author: Bastien / @bzg2 / http://bzg.fr
+;; Author: Bastien / @bzg2 / https://bzg.fr
 ;;
 ;; First make sure you read this text by Peter Norvig:
 ;; http://norvig.com/21-days.html
@@ -26,7 +27,7 @@ filename: learn-emacs-lisp.el
 ;;
 ;; Going through this tutorial won't damage your computer unless
 ;; you get so angry that you throw it on the floor.  In that case,
-;; I hereby decline any responsability.  Have fun!
+;; I hereby decline any responsibility.  Have fun!
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -193,7 +194,7 @@ filename: learn-emacs-lisp.el
 ;; And evaluate it:
 (greeting "you")
 
-;; Some function are interactive:
+;; Some functions are interactive:
 (read-from-minibuffer "Enter your name: ")
 
 ;; Evaluating this function returns what you entered at the prompt.
@@ -224,6 +225,8 @@ filename: learn-emacs-lisp.el
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Let's store a list of names:
+;; If you want to create a literal list of data, use ' to stop it from
+;; being evaluated - literally, "quote" the data.
 (setq list-of-names '("Sarah" "Chloe" "Mathilde"))
 
 ;; Get the first element of this list with `car':

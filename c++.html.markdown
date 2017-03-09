@@ -4,6 +4,10 @@ filename: learncpp.cpp
 contributors:
     - ["Steven Basart", "http://github.com/xksteven"]
     - ["Matt Kline", "https://github.com/mrkline"]
+    - ["Geoff Liu", "http://geoffliu.me"]
+    - ["Connor Waters", "http://github.com/connorwaters"]
+    - ["Ankush Goyal", "http://github.com/ankushg07"]
+    - ["Jatin Dhankhar", "https://github.com/jatindhankhar"]
 lang: en
 ---
 
@@ -52,11 +56,11 @@ int main(int argc, char** argv)
 
 // However, C++ varies in some of the following ways:
 
-// In C++, character literals are one byte.
-sizeof('c') == 1
+// In C++, character literals are chars
+sizeof('c') == sizeof(char) == 1
 
-// In C, character literals are the same size as ints.
-sizeof('c') == sizeof(10)
+// In C, character literals are ints
+sizeof('c') == sizeof(int)
 
 
 // C++ has strict prototyping
@@ -147,7 +151,7 @@ namespace First {
 namespace Second {
     void foo()
     {
-        printf("This is Second::foo\n")
+        printf("This is Second::foo\n");
     }
 }
 
@@ -158,11 +162,12 @@ void foo()
 
 int main()
 {
-    // Assume everything is from the namespace "Second"
-    // unless otherwise specified.
+    // Includes all symbols from namespace Second into the current scope. Note
+    // that simply foo() no longer works, since it is now ambiguous whether
+    // we're calling the foo in namespace Second or the top level.
     using namespace Second;
 
-    foo(); // prints "This is Second::foo"
+    Second::foo(); // prints "This is Second::foo"
     First::Nested::foo(); // prints "This is First::Nested::foo"
     ::foo(); // prints "This is global foo"
 }
@@ -242,11 +247,134 @@ cout << fooRef; // Prints "I am foo. Hi!"
 // Doesn't reassign "fooRef". This is the same as "foo = bar", and
 //   foo == "I am bar"
 // after this line.
+cout << &fooRef << endl; //Prints the address of foo
 fooRef = bar;
+cout << &fooRef << endl; //Still prints the address of foo
+cout << fooRef;  // Prints "I am bar"
+
+//The address of fooRef remains the same, i.e. it is still referring to foo.
+
 
 const string& barRef = bar; // Create a const reference to bar.
 // Like C, const values (and pointers and references) cannot be modified.
 barRef += ". Hi!"; // Error, const references cannot be modified.
+
+// Sidetrack: Before we talk more about references, we must introduce a concept
+// called a temporary object. Suppose we have the following code:
+string tempObjectFun() { ... }
+string retVal = tempObjectFun();
+
+// What happens in the second line is actually:
+//   - a string object is returned from tempObjectFun
+//   - a new string is constructed with the returned object as argument to the
+//     constructor
+//   - the returned object is destroyed
+// The returned object is called a temporary object. Temporary objects are
+// created whenever a function returns an object, and they are destroyed at the
+// end of the evaluation of the enclosing expression (Well, this is what the
+// standard says, but compilers are allowed to change this behavior. Look up
+// "return value optimization" if you're into this kind of details). So in this
+// code:
+foo(bar(tempObjectFun()))
+
+// assuming foo and bar exist, the object returned from tempObjectFun is
+// passed to bar, and it is destroyed before foo is called.
+
+// Now back to references. The exception to the "at the end of the enclosing
+// expression" rule is if a temporary object is bound to a const reference, in
+// which case its life gets extended to the current scope:
+
+void constReferenceTempObjectFun() {
+  // constRef gets the temporary object, and it is valid until the end of this
+  // function.
+  const string& constRef = tempObjectFun();
+  ...
+}
+
+// Another kind of reference introduced in C++11 is specifically for temporary
+// objects. You cannot have a variable of its type, but it takes precedence in
+// overload resolution:
+
+void someFun(string& s) { ... }  // Regular reference
+void someFun(string&& s) { ... }  // Reference to temporary object
+
+string foo;
+someFun(foo);  // Calls the version with regular reference
+someFun(tempObjectFun());  // Calls the version with temporary reference
+
+// For example, you will see these two versions of constructors for
+// std::basic_string:
+basic_string(const basic_string& other);
+basic_string(basic_string&& other);
+
+// Idea being if we are constructing a new string from a temporary object (which
+// is going to be destroyed soon anyway), we can have a more efficient
+// constructor that "salvages" parts of that temporary string. You will see this
+// concept referred to as "move semantics".
+
+/////////////////////
+// Enums
+/////////////////////
+
+// Enums are a way to assign a value to a constant most commonly used for
+// easier visualization and reading of code
+enum ECarTypes
+{
+  Sedan,
+  Hatchback,
+  SUV,
+  Wagon
+};
+
+ECarTypes GetPreferredCarType()
+{
+	return ECarTypes::Hatchback;
+}
+
+// As of C++11 there is an easy way to assign a type to the enum which can be
+// useful in serialization of data and converting enums back-and-forth between
+// the desired type and their respective constants
+enum ECarTypes : uint8_t
+{
+  Sedan, // 0
+  Hatchback, // 1
+  SUV = 254, // 254
+  Hybrid // 255
+};
+
+void WriteByteToFile(uint8_t InputValue)
+{
+	// Serialize the InputValue to a file
+}
+
+void WritePreferredCarTypeToFile(ECarTypes InputCarType)
+{
+	// The enum is implicitly converted to a uint8_t due to its declared enum type
+	WriteByteToFile(InputCarType);
+}
+
+// On the other hand you may not want enums to be accidentally cast to an integer
+// type or to other enums so it is instead possible to create an enum class which
+// won't be implicitly converted
+enum class ECarTypes : uint8_t
+{
+  Sedan, // 0
+  Hatchback, // 1
+  SUV = 254, // 254
+  Hybrid // 255
+};
+
+void WriteByteToFile(uint8_t InputValue)
+{
+	// Serialize the InputValue to a file
+}
+
+void WritePreferredCarTypeToFile(ECarTypes InputCarType)
+{
+	// Won't compile even though ECarTypes is a uint8_t due to the enum
+	// being declared as an "enum class"!
+	WriteByteToFile(InputCarType);
+}
 
 //////////////////////////////////////////
 // Classes and object-oriented programming
@@ -294,7 +422,10 @@ public:
     // These are called when an object is deleted or falls out of scope.
     // This enables powerful paradigms such as RAII
     // (see below)
-    // Destructors must be virtual to allow classes to be derived from this one.
+    // The destructor should be virtual if a class is to be derived from;
+    // if it is not virtual, then the derived class' destructor will
+    // not be called if the object is destroyed through a base-class reference
+    // or pointer.
     virtual ~Dog();
 
 }; // A semicolon must follow the class definition.
@@ -325,7 +456,7 @@ void Dog::print() const
 
 Dog::~Dog()
 {
-    cout << "Goodbye " << name << "\n";
+    std::cout << "Goodbye " << name << "\n";
 }
 
 int main() {
@@ -339,6 +470,8 @@ int main() {
 // Inheritance:
 
 // This class inherits everything public and protected from the Dog class
+// as well as private but may not directly access private members/methods
+// without a public or protected method for doing so
 class OwnedDog : public Dog {
 
     void setOwner(const std::string& dogsOwner);
@@ -437,9 +570,10 @@ int main () {
 /////////////////////
 
 // Templates in C++ are mostly used for generic programming, though they are
-// much more powerful than generics constructs in other languages. It also
-// supports explicit and partial specialization, functional-style type classes,
-// and also it's Turing-complete.
+// much more powerful than generic constructs in other languages. They also
+// support explicit and partial specialization and functional-style type
+// classes; in fact, they are a Turing-complete functional language embedded
+// in C++!
 
 // We start with the kind of generic programming you might be familiar with. To
 // define a class or function that takes a type parameter:
@@ -451,7 +585,7 @@ public:
 };
 
 // During compilation, the compiler actually generates copies of each template
-// with parameters substituted, and so the full definition of the class must be
+// with parameters substituted, so the full definition of the class must be
 // present at each invocation. This is why you will see template classes defined
 // entirely in header files.
 
@@ -465,13 +599,13 @@ intBox.insert(123);
 Box<Box<int> > boxOfBox;
 boxOfBox.insert(intBox);
 
-// Up until C++11, you must place a space between the two '>'s, otherwise '>>'
-// will be parsed as the right shift operator.
+// Until C++11, you had to place a space between the two '>'s, otherwise '>>'
+// would be parsed as the right shift operator.
 
 // You will sometimes see
 //   template<typename T>
-// instead. The 'class' keyword and 'typename' keyword are _mostly_
-// interchangeable in this case. For full explanation, see
+// instead. The 'class' keyword and 'typename' keywords are _mostly_
+// interchangeable in this case. For the full explanation, see
 //   http://en.wikipedia.org/wiki/Typename
 // (yes, that keyword has its own Wikipedia page).
 
@@ -527,12 +661,15 @@ try {
     // Do not allocate exceptions on the heap using _new_.
     throw std::runtime_error("A problem occurred");
 }
+
 // Catch exceptions by const reference if they are objects
 catch (const std::exception& ex)
 {
-  std::cout << ex.what();
+    std::cout << ex.what();
+}
+
 // Catches any exception not caught by previous _catch_ blocks
-} catch (...)
+catch (...)
 {
     std::cout << "Unknown exception caught";
     throw; // Re-throws the exception
@@ -542,8 +679,8 @@ catch (const std::exception& ex)
 // RAII
 ///////
 
-// RAII stands for Resource Allocation Is Initialization.
-// It is often considered the most powerful paradigm in C++,
+// RAII stands for "Resource Acquisition Is Initialization".
+// It is often considered the most powerful paradigm in C++
 // and is the simple concept that a constructor for an object
 // acquires that object's resources and the destructor releases them.
 
@@ -564,9 +701,9 @@ void doSomethingWithAFile(const char* filename)
 // Unfortunately, things are quickly complicated by error handling.
 // Suppose fopen can fail, and that doSomethingWithTheFile and
 // doSomethingElseWithIt return error codes if they fail.
-// (Exceptions are the preferred way of handling failure,
-//  but some programmers, especially those with a C background,
-//  disagree on the utility of exceptions).
+//  (Exceptions are the preferred way of handling failure,
+//   but some programmers, especially those with a C background,
+//   disagree on the utility of exceptions).
 // We now have to check each call for failure and close the file handle
 // if a problem occurred.
 bool doSomethingWithAFile(const char* filename)
@@ -666,6 +803,94 @@ void doSomethingWithAFile(const std::string& filename)
 //   all automatically destroy their contents when they fall out of scope.
 // - Mutexes using lock_guard and unique_lock
 
+// containers with object keys of non-primitive values (custom classes) require
+// compare function in the object itself or as a function pointer. Primitives
+// have default comparators, but you can override it.
+class Foo {
+public:
+    int j;
+    Foo(int a) : j(a) {}
+};
+struct compareFunction {
+    bool operator()(const Foo& a, const Foo& b) const {
+        return a.j < b.j;
+    }
+};
+//this isn't allowed (although it can vary depending on compiler)
+//std::map<Foo, int> fooMap;
+std::map<Foo, int, compareFunction> fooMap;
+fooMap[Foo(1)]  = 1;
+fooMap.find(Foo(1)); //true
+
+///////////////////////////////////////
+// Lambda Expressions (C++11 and above)
+///////////////////////////////////////
+
+// lambdas are a convenient way of defining an anonymous function
+// object right at the location where it is invoked or passed as
+// an argument to a function.
+
+// For example, consider sorting a vector of pairs using the second
+// value of the pair
+
+vector<pair<int, int> > tester;
+tester.push_back(make_pair(3, 6));
+tester.push_back(make_pair(1, 9));
+tester.push_back(make_pair(5, 0));
+
+// Pass a lambda expression as third argument to the sort function
+// sort is from the <algorithm> header
+
+sort(tester.begin(), tester.end(), [](const pair<int, int>& lhs, const pair<int, int>& rhs) {
+        return lhs.second < rhs.second;
+    });
+
+// Notice the syntax of the lambda expression,
+// [] in the lambda is used to "capture" variables
+// The "Capture List" defines what from the outside of the lambda should be available inside the function body and how.
+// It can be either:
+//     1. a value : [x]
+//     2. a reference : [&x]
+//     3. any variable currently in scope by reference [&]
+//     4. same as 3, but by value [=]
+// Example:
+
+vector<int> dog_ids;
+// number_of_dogs = 3;
+for(int i = 0; i < 3; i++) {
+	dog_ids.push_back(i);
+}
+
+int weight[3] = {30, 50, 10};
+
+// Say you want to sort dog_ids according to the dogs' weights
+// So dog_ids should in the end become: [2, 0, 1]
+
+// Here's where lambda expressions come in handy
+
+sort(dog_ids.begin(), dog_ids.end(), [&weight](const int &lhs, const int &rhs) {
+        return weight[lhs] < weight[rhs];
+    });
+// Note we captured "weight" by reference in the above example.
+// More on Lambdas in C++ : http://stackoverflow.com/questions/7627098/what-is-a-lambda-expression-in-c11
+
+///////////////////////////////
+// Range For (C++11 and above)
+///////////////////////////////
+
+// You can use a range for loop to iterate over a container
+int arr[] = {1, 10, 3};
+
+for(int elem: arr){
+	cout << elem << endl;
+}
+
+// You can use "auto" and not worry about the type of the elements of the container
+// For example:
+
+for(auto elem: arr) {
+	// Do something with each element of arr
+}
 
 /////////////////////
 // Fun stuff
@@ -680,26 +905,29 @@ class Foo {
   virtual void bar();
 };
 class FooSub : public Foo {
-  virtual void bar();  // overrides Foo::bar!
+  virtual void bar();  // Overrides Foo::bar!
 };
 
 
 // 0 == false == NULL (most of the time)!
 bool* pt = new bool;
-*pt = 0;  // Sets the value points by 'pt' to false.
+*pt = 0; // Sets the value points by 'pt' to false.
 pt = 0;  // Sets 'pt' to the null pointer. Both lines compile without warnings.
 
 // nullptr is supposed to fix some of that issue:
 int* pt2 = new int;
-*pt2 = nullptr;  // Doesn't compile
+*pt2 = nullptr; // Doesn't compile
 pt2 = nullptr;  // Sets pt2 to null.
 
-// But somehow 'bool' type is an exception (this is to make `if (ptr)` compile).
+// There is an exception made for bools.
+// This is to allow you to test for null pointers with if(!ptr),
+// but as a consequence you can assign nullptr to a bool directly!
 *pt = nullptr;  // This still compiles, even though '*pt' is a bool!
 
 
 // '=' != '=' != '='!
-// Calls Foo::Foo(const Foo&) or some variant copy constructor.
+// Calls Foo::Foo(const Foo&) or some variant (see move semantics) copy
+// constructor.
 Foo f2;
 Foo f1 = f2;
 
@@ -712,6 +940,189 @@ Foo f1 = fooSub;
 // Calls Foo::operator=(Foo&) or variant.
 Foo f1;
 f1 = f2;
+
+
+///////////////////////////////////////
+// Tuples (C++11 and above)
+///////////////////////////////////////
+
+#include<tuple>
+
+// Conceptually, Tuples are similar to  old data structures (C-like structs) but instead of having named data members,
+// its elements are accessed by their order in the tuple.
+
+// We start with constructing a tuple.
+// Packing values into tuple
+auto first = make_tuple(10, 'A');
+const int maxN = 1e9;
+const int maxL = 15;
+auto second = make_tuple(maxN, maxL);
+
+// Printing elements of 'first' tuple
+cout << get<0>(first) << " " << get<1>(first) << "\n"; //prints : 10 A
+
+// Printing elements of 'second' tuple
+cout << get<0>(second) << " " << get<1>(second) << "\n"; // prints: 1000000000 15
+
+// Unpacking tuple into variables
+
+int first_int;
+char first_char;
+tie(first_int, first_char) = first;
+cout << first_int << " " << first_char << "\n";  // prints : 10 A
+
+// We can also create tuple like this.
+
+tuple<int, char, double> third(11, 'A', 3.14141);
+// tuple_size returns number of elements in a tuple (as a constexpr)
+
+cout << tuple_size<decltype(third)>::value << "\n"; // prints: 3
+
+// tuple_cat concatenates the elements of all the tuples in the same order.
+
+auto concatenated_tuple = tuple_cat(first, second, third);
+// concatenated_tuple becomes = (10, 'A', 1e9, 15, 11, 'A', 3.14141)
+
+cout << get<0>(concatenated_tuple) << "\n"; // prints: 10
+cout << get<3>(concatenated_tuple) << "\n"; // prints: 15
+cout << get<5>(concatenated_tuple) << "\n"; // prints: 'A'
+
+
+/////////////////////
+// Containers
+/////////////////////
+
+// Containers or the Standard Template Library are some predefined templates.
+// They manage the storage space for its elements and provide
+// member functions to access and manipulate them.
+
+// Few containers are as follows:
+
+// Vector (Dynamic array)
+// Allow us to Define the Array or list of objects at run time
+#include<vector>
+vector<Data_Type> Vector_name; // used to initialize the vector
+cin >> val;
+Vector_name.push_back(val); // will push the value of variable into array
+
+// To iterate through vector, we have 2 choices:
+// Normal looping
+for(int i=0; i<Vector_name.size(); i++)
+// It will iterate through the vector from index '0' till last index
+
+// Iterator
+vector<Data_Type>::iterator it; // initialize the iterator for vector
+for(it=vector_name.begin(); it!=vector_name.end();++it)
+
+// For accessing the element of the vector
+// Operator []
+var = vector_name[index]; // Will assign value at that index to var
+
+
+// Set
+// Sets are containers that store unique elements following a specific order.
+// Set is a very useful container to store unique values in sorted order
+// without any other functions or code.
+
+#include<set>
+set<int> ST;    // Will initialize the set of int data type
+ST.insert(30);  // Will insert the value 30 in set ST
+ST.insert(10);  // Will insert the value 10 in set ST
+ST.insert(20);  // Will insert the value 20 in set ST
+ST.insert(30);  // Will insert the value 30 in set ST
+// Now elements of sets are as follows
+//  10 20 30
+
+// To erase an element
+ST.erase(20);  // Will erase element with value 20
+// Set ST: 10 30
+// To iterate through Set we use iterators
+set<int>::iterator it;
+for(it=ST.begin();it<ST.end();it++) {
+	cout << *it << endl;
+}
+// Output:
+// 10
+// 30
+
+// To clear the complete container we use Container_name.clear()
+ST.clear();
+cout << ST.size();  // will print the size of set ST
+// Output: 0
+
+// NOTE: for duplicate elements we can use multiset
+
+// Map
+// Maps store elements formed by a combination of a key value
+// and a mapped value, following a specific order.
+
+#include<map>
+map<char, int> mymap;  // Will initialize the map with key as char and value as int
+
+mymap.insert(pair<char,int>('A',1));
+// Will insert value 1 for key A
+mymap.insert(pair<char,int>('Z',26));
+// Will insert value 26 for key Z
+
+// To iterate
+map<char,int>::iterator it;
+for (it=mymap.begin(); it!=mymap.end(); ++it)
+    std::cout << it->first << "->" << it->second << '\n';
+// Output:
+// A->1
+// Z->26
+
+// To find the value corresponding to a key
+it = mymap.find('Z');
+cout << it->second;
+
+// Output: 26
+
+
+///////////////////////////////////
+// Logical and Bitwise operators
+//////////////////////////////////
+
+// Most of the operators in C++ are same as in other languages
+
+// Logical operators
+
+// C++ uses Short-circuit evaluation for boolean expressions, i.e, the second argument is executed or
+// evaluated only if the first argument does not suffice to determine the value of the expression
+
+true && false // Performs **logical and** to yield false
+true || false // Performs **logical or** to yield true
+! true        // Performs **logical not** to yield false
+
+// Instead of using symbols equivalent keywords can be used
+true and false // Performs **logical and** to yield false
+true or false  // Performs **logical or** to yield true
+not true       // Performs **logical not** to yield false
+
+// Bitwise operators
+
+// **<<** Left Shift Operator
+// << shifts bits to the left
+4 << 1 // Shifts bits of 4 to left by 1 to give 8
+// x << n can be thought as x * 2^n
+
+
+// **>>** Right Shift Operator
+// >> shifts bits to the right
+4 >> 1 // Shifts bits of 4 to right by 1 to give 2
+// x >> n can be thought as x / 2^n
+
+~4    // Performs a bitwise not
+4 | 3 // Performs bitwise or
+4 & 3 // Performs bitwise and
+4 ^ 3 // Performs bitwise xor
+
+// Equivalent keywords are
+compl 4    // Performs a bitwise not
+4 bitor 3  // Performs bitwise or
+4 bitand 3 // Performs bitwise and
+4 xor 3    // Performs bitwise xor
+
 
 ```
 Further Reading:

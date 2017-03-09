@@ -16,13 +16,14 @@ JavaScript isn't just limited to web browsers, though: Node.js, a project that
 provides a standalone runtime for Google Chrome's V8 JavaScript engine, is
 becoming more and more popular.
 
-Feedback would be highly appreciated! You can reach me at
-[@adambrenecki](https://twitter.com/adambrenecki), or
-[adam@brenecki.id.au](mailto:adam@brenecki.id.au).
+JavaScript has a C-like syntax, so if you've used languages like C or Java,
+a lot of the basic syntax will already be familiar. Despite this, and despite
+the similarity in name, JavaScript's object model is significantly different to
+Java's.
 
 ```js
-// Comments are like C. Single-line comments start with two slashes,
-/* and multiline comments start with slash-star
+// Single-line comments start with two slashes.
+/* Multiline comments start with slash-star,
    and end with star-slash */
 
 // Statements can be terminated by ;
@@ -40,7 +41,7 @@ doStuff()
 
 // JavaScript has one number type (which is a 64-bit IEEE 754 double).
 // Doubles have a 52-bit mantissa, which is enough to store integers
-//    up to about 9✕10¹⁵ precisely.
+// up to about 9✕10¹⁵ precisely.
 3; // = 3
 1.5; // = 1.5
 
@@ -54,6 +55,11 @@ doStuff()
 // Including uneven division.
 5 / 2; // = 2.5
 
+// And modulo division.
+10 % 2; // = 0
+30 % 4; // = 2
+18.5 % 7; // = 4.5
+
 // Bitwise operations also work; when you perform a bitwise operation your float
 // is converted to a signed int *up to* 32 bits.
 1 << 2; // = 4
@@ -64,7 +70,7 @@ doStuff()
 // There are three special not-a-real-number values:
 Infinity; // result of e.g. 1/0
 -Infinity; // result of e.g. -1/0
-NaN; // result of e.g. 0/0
+NaN; // result of e.g. 0/0, stands for 'Not a Number'
 
 // There's also a boolean type.
 true;
@@ -95,6 +101,10 @@ false;
 // Strings are concatenated with +
 "Hello " + "world!"; // = "Hello world!"
 
+// ... which works with more than just strings
+"1, 2, " + 3; // = "1, 2, 3"
+"Hello " + ["world", "!"] // = "Hello world,!"
+
 // and are compared with < and >
 "a" < "b"; // = true
 
@@ -104,7 +114,7 @@ null == undefined; // = true
 
 // ...unless you use ===
 "5" === 5; // = false
-null === undefined; // = false 
+null === undefined; // = false
 
 // ...which can result in some weird behaviour...
 13 + !0; // 14
@@ -135,7 +145,7 @@ undefined; // used to indicate a value is not currently present (although
 // character.
 var someVar = 5;
 
-// if you leave the var keyword off, you won't get an error...
+// If you leave the var keyword off, you won't get an error...
 someOtherVar = 10;
 
 // ...but your variable will be created in the global scope, not in the scope
@@ -143,6 +153,10 @@ someOtherVar = 10;
 
 // Variables declared without being assigned to are set to undefined.
 var someThirdVar; // = undefined
+
+// If you want to declare a couple of variables, then you could use a comma
+// separator
+var someFourthVar = 2, someFifthVar = 4;
 
 // There's shorthand for performing math operations on variables:
 someVar += 5; // equivalent to someVar = someVar + 5; someVar is 10 now
@@ -189,8 +203,6 @@ myObj.myFourthKey; // = undefined
 ///////////////////////////////////
 // 3. Logic and Control Structures
 
-// The syntax for this section is almost identical to Java's. 
-
 // The `if` structure works as you'd expect.
 var count = 1;
 if (count == 3){
@@ -213,10 +225,28 @@ do {
 } while (!isValid(input))
 
 // The `for` loop is the same as C and Java:
-// initialisation; continue condition; iteration.
+// initialization; continue condition; iteration.
 for (var i = 0; i < 5; i++){
     // will run 5 times
 }
+
+// Breaking out of labeled loops is similar to Java
+outer:
+for (var i = 0; i < 10; i++) {
+    for (var j = 0; j < 10; j++) {
+        if (i == 5 && j ==5) {
+            break outer;
+            // breaks out of outer loop instead of only the inner one
+        }
+    }
+}
+
+// The for/in statement allows iteration over properties of an object.
+var description = "";
+var person = {fname:"Paul", lname:"Ken", age:18};
+for (var x in person){
+    description += person[x] + " ";
+} // description = 'Paul Ken 18 '
 
 // && is logical and, || is logical or
 if (house.size == "big" && house.colour == "blue"){
@@ -229,10 +259,9 @@ if (colour == "red" || colour == "blue"){
 // && and || "short circuit", which is useful for setting default values.
 var name = otherName || "default";
 
-
 // The `switch` statement checks for equality with `===`.
-// use 'break' after each case 
-// or the cases after the correct one will be executed too. 
+// Use 'break' after each case
+// or the cases after the correct one will be executed too.
 grade = 'B';
 switch (grade) {
   case 'A':
@@ -262,12 +291,9 @@ myFunction("foo"); // = "FOO"
 // Note that the value to be returned must start on the same line as the
 // `return` keyword, otherwise you'll always return `undefined` due to
 // automatic semicolon insertion. Watch out for this when using Allman style.
-function myFunction()
-{
+function myFunction(){
     return // <- semicolon automatically inserted here
-    {
-        thisIsAn: 'object literal'
-    }
+    {thisIsAn: 'object literal'}
 }
 myFunction(); // = undefined
 
@@ -280,6 +306,12 @@ function myFunction(){
 setTimeout(myFunction, 5000);
 // Note: setTimeout isn't part of the JS language, but is provided by browsers
 // and Node.js.
+
+// Another function provided by browsers is setInterval
+function myFunction(){
+    // this code will be called every 5 seconds
+}
+setInterval(myFunction, 5000);
 
 // Function objects don't even have to be declared with a name - you can write
 // an anonymous function definition directly into the arguments of another.
@@ -299,7 +331,7 @@ i; // = 5 - not undefined as you'd expect in a block-scoped language
 // scope.
 (function(){
     var temporary = 5;
-    // We can access the global scope by assiging to the "global object", which
+    // We can access the global scope by assigning to the "global object", which
     // in a web browser is always `window`. The global object may have a
     // different name in non-browser environments such as Node.js.
     window.permanent = 10;
@@ -393,7 +425,7 @@ var doubler = product.bind(this, 2);
 doubler(8); // = 16
 
 // When you call a function with the `new` keyword, a new object is created, and
-// made available to the function via the this keyword. Functions designed to be
+// made available to the function via the `this` keyword. Functions designed to be
 // called like that are called constructors.
 
 var MyConstructor = function(){
@@ -401,6 +433,10 @@ var MyConstructor = function(){
 }
 myNewObj = new MyConstructor(); // = {myNumber: 5}
 myNewObj.myNumber; // = 5
+
+// Unlike most other popular object-oriented languages, JavaScript has no 
+// concept of 'instances' created from 'class' blueprints; instead, JavaScript
+// combines instantiation and inheritance into a single concept: a 'prototype'.
 
 // Every JavaScript object has a 'prototype'. When you go to access a property
 // on an object that doesn't exist on the actual object, the interpreter will
@@ -437,6 +473,26 @@ myObj.myBoolean; // = true
 // reflected everywhere.
 myPrototype.meaningOfLife = 43;
 myObj.meaningOfLife; // = 43
+
+// The for/in statement allows iteration over properties of an object,
+// walking up the prototype chain until it sees a null prototype.
+for (var x in myObj){
+    console.log(myObj[x]);
+}
+///prints:
+// Hello world!
+// 42
+// [Function: myFunc]
+
+// To only consider properties attached to the object itself
+// and not its prototypes, use the `hasOwnProperty()` check.
+for (var x in myObj){
+    if (myObj.hasOwnProperty(x)){
+        console.log(myObj[x]);
+    }
+}
+///prints:
+// Hello world!
 
 // We mentioned that `__proto__` was non-standard, and there's no standard way to
 // change the prototype of an existing object. However, there are two ways to
@@ -475,8 +531,9 @@ myNumber === myNumberObj; // = false
 if (0){
     // This code won't execute, because 0 is falsy.
 }
-if (Number(0)){
-    // This code *will* execute, because Number(0) is truthy.
+if (new Number(0)){
+   // This code will execute, because wrapped numbers are objects, and objects
+   // are always truthy.
 }
 
 // However, the wrapper objects and the regular builtins share a prototype, so
@@ -505,28 +562,45 @@ if (Object.create === undefined){ // don't overwrite it if it exists
 
 ## Further Reading
 
-The [Mozilla Developer
-Network](https://developer.mozilla.org/en-US/docs/Web/JavaScript) provides
-excellent documentation for JavaScript as it's used in browsers. Plus, it's a
-wiki, so as you learn more you can help others out by sharing your own
-knowledge.
+The [Mozilla Developer Network][1] provides excellent documentation for
+JavaScript as it's used in browsers. Plus, it's a wiki, so as you learn more you
+can help others out by sharing your own knowledge.
 
-MDN's [A re-introduction to
-JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript)
-covers much of the concepts covered here in more detail. This guide has quite
-deliberately only covered the JavaScript language itself; if you want to learn
-more about how to use JavaScript in web pages, start by learning about the
-[Document Object
-Model](https://developer.mozilla.org/en-US/docs/Using_the_W3C_DOM_Level_1_Core)
+MDN's [A re-introduction to JavaScript][2] covers much of the concepts covered
+here in more detail. This guide has quite deliberately only covered the
+JavaScript language itself; if you want to learn more about how to use
+JavaScript in web pages, start by learning about the [Document Object Model][3].
 
-[Learn Javascript by Example and with Challenges](http://www.learneroo.com/modules/64/nodes/350) is a variant of this reference with built-in challenges. 
+[Learn Javascript by Example and with Challenges][4] is a variant of this
+reference with built-in challenges.
 
-[JavaScript Garden](http://bonsaiden.github.io/JavaScript-Garden/) is an in-depth
-guide of all the counter-intuitive parts of the language.
+[JavaScript Garden][5] is an in-depth guide of all the counter-intuitive parts
+of the language.
 
-[JavaScript: The Definitive Guide](http://www.amazon.com/gp/product/0596805527/) is a classic guide / reference book. 
+[JavaScript: The Definitive Guide][6] is a classic guide and reference book.
 
-In addition to direct contributors to this article, some content is adapted
-from Louie Dinh's Python tutorial on this site, and the [JS
-Tutorial](https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript)
-on the Mozilla Developer Network.
+[Eloquent Javascript][8] by Marijn Haverbeke is an excellent JS book/ebook with
+attached terminal
+
+[Eloquent Javascript - The Annotated Version][9] by Gordon Zhu is also a great
+derivative of Eloquent Javascript with extra explanations and clarifications for
+some of the more complicated examples.
+
+[Javascript: The Right Way][10] is a guide intended to introduce new developers
+to JavaScript and help experienced developers learn more about its best practices.
+
+In addition to direct contributors to this article, some content is adapted from
+Louie Dinh's Python tutorial on this site, and the [JS Tutorial][7] on the
+Mozilla Developer Network.
+
+
+[1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript
+[2]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript
+[3]: https://developer.mozilla.org/en-US/docs/Using_the_W3C_DOM_Level_1_Core
+[4]: http://www.learneroo.com/modules/64/nodes/350
+[5]: http://bonsaiden.github.io/JavaScript-Garden/
+[6]: http://www.amazon.com/gp/product/0596805527/
+[7]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript
+[8]: http://eloquentjavascript.net/
+[9]: http://watchandcode.com/courses/eloquent-javascript-the-annotated-version
+[10]: http://jstherightway.org/

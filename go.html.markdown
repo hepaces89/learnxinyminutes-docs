@@ -10,6 +10,8 @@ contributors:
     - ["Quint Guvernator", "https://github.com/qguv"]
     - ["Jose Donizetti", "https://github.com/josedonizetti"]
     - ["Alexej Friesen", "https://github.com/heyalexej"]
+    - ["Clayton Walker", "https://github.com/cwalk"]
+    - ["Leonid Shevtsov", "https://github.com/leonid-shevtsov"]
 ---
 
 Go was created out of the need to get work done. It's not the latest trend
@@ -38,6 +40,7 @@ import (
 	"io/ioutil" // Implements some I/O utility functions.
 	m "math"    // Math library with local alias m.
 	"net/http"  // Yes, a web server!
+	"os"        // OS functions like working with the file system
 	"strconv"   // String conversions.
 )
 
@@ -107,15 +110,16 @@ can include line breaks.` // Same string type.
 	bs := []byte("a slice") // Type conversion syntax.
 
 	// Because they are dynamic, slices can be appended to on-demand.
-	// To append elements to a slice, built-in append() function is used.
+	// To append elements to a slice, the built-in append() function is used.
 	// First argument is a slice to which we are appending. Commonly,
 	// the array variable is updated in place, as in example below.
 	s := []int{1, 2, 3}		// Result is a slice of length 3.
 	s = append(s, 4, 5, 6)	// Added 3 elements. Slice now has length of 6.
 	fmt.Println(s) // Updated slice is now [1 2 3 4 5 6]
+
 	// To append another slice, instead of list of atomic elements we can
 	// pass a reference to a slice or a slice literal like this, with a
-	// trailing elipsis, meaning take a slice and unpack its elements,
+	// trailing ellipsis, meaning take a slice and unpack its elements,
 	// appending them to slice s.
 	s = append(s, []int{7, 8, 9}...) // Second argument is a slice literal.
 	fmt.Println(s)	// Updated slice is now [1 2 3 4 5 6 7 8 9]
@@ -129,8 +133,16 @@ can include line breaks.` // Same string type.
 	m["one"] = 1
 
 	// Unused variables are an error in Go.
-	// The underbar lets you "use" a variable but discard its value.
+	// The underscore lets you "use" a variable but discard its value.
 	_, _, _, _, _, _, _, _, _, _ = str, s2, g, f, u, pi, n, a3, s4, bs
+	// Usually you use it to ignore one of the return values of a function
+	// For example, in a quick and dirty script you might ignore the
+	// error value returned from os.Create, and expect that the file
+	// will always be created.
+	file, _ := os.Create("output.txt")
+	fmt.Fprint(file, "This is how you write to a file, by the way")
+	file.Close()
+	
 	// Output of course counts as using a variable.
 	fmt.Println(s, c, a4, s3, d2, m)
 
@@ -164,7 +176,7 @@ func expensiveComputation() float64 {
 }
 
 func learnFlowControl() {
-	// If statements require brace brackets, and do not require parens.
+	// If statements require brace brackets, and do not require parentheses.
 	if true {
 		fmt.Println("told ya")
 	}
@@ -209,6 +221,10 @@ func learnFlowControl() {
 		// for each pair in the map, print key and value
 		fmt.Printf("key=%s, value=%d\n", key, value)
 	}
+	// If you only need the value, use the underscore as the key
+	for _, name := range []string{"Bob", "Bill", "Joe"} {
+		fmt.Printf("Hello, %s\n", name)
+	}
 
 	// As with for, := in an if statement means to declare and assign
 	// y first, then test y > x.
@@ -219,7 +235,8 @@ func learnFlowControl() {
 	xBig := func() bool {
 		return x > 10000 // References x declared above switch statement.
 	}
-	fmt.Println("xBig:", xBig()) // true (we last assigned e^10 to x).
+	x = 99999
+	fmt.Println("xBig:", xBig()) // true
 	x = 1.3e3                    // This makes x == 1300
 	fmt.Println("xBig:", xBig()) // false now.
 
@@ -407,6 +424,8 @@ func requestServer() {
 
 The root of all things Go is the [official Go web site](http://golang.org/).
 There you can follow the tutorial, play interactively, and read lots.
+Aside from a tour, [the docs](https://golang.org/doc/) contain information on
+how to write clean and effective Go code, package and command docs, and release history.
 
 The language definition itself is highly recommended. It's easy to read
 and amazingly short (as language definitions go these days.)
@@ -420,3 +439,5 @@ idioms. Or you can click on a function name in [the
 documentation](http://golang.org/pkg/) and the source code comes up!
 
 Another great resource to learn Go is [Go by example](https://gobyexample.com/).
+
+Go Mobile adds support for mobile platforms (Android and iOS). You can write all-Go native mobile apps or write a library that contains bindings from a Go package, which can be invoked via Java (Android) and Objective-C (iOS). Check out the [Go Mobile page](https://github.com/golang/go/wiki/Mobile) for more information.

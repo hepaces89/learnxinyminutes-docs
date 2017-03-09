@@ -129,7 +129,7 @@ func learnFlowControl() {
         fmt.Println("told ya")
     }
     // 用go fmt 命令可以帮你格式化代码，所以不用怕被人吐槽代码风格了，
-    // 也不用容忍被人的代码风格。
+    // 也不用容忍别人的代码风格。
     if false {
         // pout
     } else {
@@ -239,7 +239,7 @@ func learnConcurrency() {
     go inc(0, c) // go is a statement that starts a new goroutine.
     go inc(10, c)
     go inc(-805, c)
-    // 从channel中独处结果并打印。
+    // 从channel中读取结果并打印。
     // 打印出什么东西是不可预知的。
     fmt.Println(<-c, <-c, <-c) // channel在右边的时候，<-是读操作。
 
@@ -283,4 +283,4 @@ Go的根源在[Go官方网站](http://golang.org/)。
 
 强烈推荐阅读语言定义部分，很简单而且很简洁！(as language definitions go these days.)
 
-学习Go还要阅读Go标准库的源代码，全部文档化了，可读性非常好，可以学到go，go style和go idioms。在文档中点击函数名，源代码就出来了！
+学习Go还要阅读Go[标准库的源代码](http://golang.org/src/)，全部文档化了，可读性非常好，可以学到go，go style和go idioms。在[文档](http://golang.org/pkg/)中点击函数名，源代码就出来了！
